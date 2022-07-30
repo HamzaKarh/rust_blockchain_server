@@ -1,7 +1,8 @@
 use std::error::Error;
-use std::{env, fmt};
 use std::io;
 use std::process::Command;
+use std::time::Duration;
+use std::{env, fmt, thread};
 
 #[derive(Debug)]
 struct MyError(String);
@@ -15,18 +16,33 @@ impl Error for MyError {}
 
 const BASE_URL: &str = "http://localhost:8000";
 
-
-fn start_server(){
+fn start_server() {
     let current_dir = env::current_dir();
-    let path = current_dir.unwrap().display().to_string().replace("console", "blockchain");
-    let cmd = "gnome-terminal -- bash -c 'cd ".to_owned() + path.as_str() + " && cargo build && cargo run'";
-    Command::new("sh").arg("-c").arg(cmd).output().expect("Error starting_server");
+    let path = current_dir
+        .unwrap()
+        .display()
+        .to_string()
+        .replace("console", "blockchain");
+    let cmd = "gnome-terminal -- bash -c 'cd ".to_owned()
+        + path.as_str()
+        + " && cargo build && cargo run'";
+    Command::new("sh")
+        .arg("-c")
+        .arg(cmd)
+        .output()
+        .expect("Error starting_server");
     println!("Successfully started server");
+    thread::sleep(Duration::from_secs(2));
+    match start_node() {
+        Ok(_) => {}
+        Err(_) => {
+            println!("Error starting node")
+        }
+    }
 }
 
-
 fn main() {
-    start_server();
+    let mut chain_running = false;
     let mut command = String::new();
     println!("Hello! Welcome to the blockchain interactive CLI !");
     println!("\n-------------------------------------------------\n\n\n");
@@ -35,30 +51,38 @@ fn main() {
         println!("Type <<start_node>> to start the blockchain\n");
         println!("Type <<create_account [id] [funds]>> to create a new account on the blockchain (note: only uint IDs are accepted)\n");
         println!("Type <<transfer [sender_id] [receiver_id] [funds]>> to transfer funds from one account to another\n");
-        println!("Type <<read_balance [account_id]>> to read the balance of an existing account\n");
+        println!("Type <<balance [account_id]>> to read the balance of an existing account\n");
         command.clear();
         io::stdin().read_line(&mut command).unwrap();
 
         // Handling commands in main loop
         if command.contains("start_node") {
-            match start_node(){
-                Ok(_) => {}
-                Err(_) => {println!("Error starting node")}
+            if !chain_running {
+                start_server();
+                chain_running = true;
+            } else {
+                println!("Chain already running");
             }
         } else if command.contains("create_account") {
-            match  create_account(command.clone()) {
+            match create_account(command.clone()) {
                 Ok(_) => {}
-                Err(_) => {println!("Error creating account")}
+                Err(_) => {
+                    println!("Error creating account")
+                }
             }
         } else if command.contains("transfer") {
-            match transfer(command.clone()){
+            match transfer(command.clone()) {
                 Ok(_) => {}
-                Err(_) => {println!("Error transfer funds")}
+                Err(_) => {
+                    println!("Error transfer funds")
+                }
             }
-        } else if command.contains("read_balance") {
-            match read_balance(command.clone()){
+        } else if command.contains("balance") {
+            match read_balance(command.clone()) {
                 Ok(_) => {}
-                Err(_) => {println!("Error reading balance");}
+                Err(_) => {
+                    println!("Error reading balance");
+                }
             }
         } else {
             println!("Unknown command {}, please try again", command);
@@ -66,7 +90,6 @@ fn main() {
         println!("\n\n\n-------------------------------------------------\n\n\n");
     }
 }
-
 
 fn read_balance(cmd: String) -> Result<(), Box<dyn Error>> {
     let mut command: Vec<&str> = cmd.split(" ").collect();
