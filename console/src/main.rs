@@ -1,6 +1,7 @@
 use std::error::Error;
-use std::fmt;
+use std::{env, fmt};
 use std::io;
+use std::process::Command;
 
 #[derive(Debug)]
 struct MyError(String);
@@ -14,7 +15,18 @@ impl Error for MyError {}
 
 const BASE_URL: &str = "http://localhost:8000";
 
+
+fn start_server(){
+    let current_dir = env::current_dir();
+    let path = current_dir.unwrap().display().to_string().replace("console", "blockchain");
+    let cmd = "gnome-terminal -- bash -c 'cd ".to_owned() + path.as_str() + " && cargo build && cargo run'";
+    Command::new("sh").arg("-c").arg(cmd).output().expect("Error starting_server");
+    println!("Successfully started server");
+}
+
+
 fn main() {
+    start_server();
     let mut command = String::new();
     println!("Hello! Welcome to the blockchain interactive CLI !");
     println!("\n-------------------------------------------------\n\n\n");

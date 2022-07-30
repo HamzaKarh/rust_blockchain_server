@@ -1,0 +1,1 @@
+cd console && cargo build && cargo run
