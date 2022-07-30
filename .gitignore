@@ -1,0 +1,5 @@
+/.idea
+/console/target/
+/blockchain/target/
+/blockchain/Cargo.lock
+/console/Cargo.lock
